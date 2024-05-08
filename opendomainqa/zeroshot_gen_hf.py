@@ -27,6 +27,7 @@ def get_text(prompt_text):
         input_ids,
         max_new_tokens=1000,
         eos_token_id=terminators,
+        pad_token_id=llm_tokenizer.eos_token_id,
         do_sample=True,
         temperature=0.1,
         top_p=0.9,
@@ -41,7 +42,7 @@ model_name_map = {"meta-llama/Llama-2-7b-chat-hf": "llama2_7b_chat", "meta-llama
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', choices=list(model_name_map.keys()), help='name of the model to use for generation, specifically the hf repo name')
+    parser.add_argument('--model_name', choices=list(model_name_map.keys()), default="meta-llama/Meta-Llama-3-8B-Instruct", help='name of the model to use for generation, specifically the hf repo name')
     args = parser.parse_args()
     return args
 
