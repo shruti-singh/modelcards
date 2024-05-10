@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from vllm import LLM, SamplingParams
 import pandas as pd
 import torch
@@ -39,10 +41,11 @@ model2contextlength = {
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', choices=list(model_name_map.keys()), help='name of the model to use for generation, specifically the hf repo name')
+    parser.add_argument('--config', choices=["ans_with_evidence", "ans"], help='name of the config to use for generation')
     args = parser.parse_args()
     return args
 
-def generate_modelcard(model_name):
+def generate_modelcard(model_name, config):
     num_cuda = 1 # torch.cuda.device_count()
     mname = model_name_map[model_name]
     
@@ -50,7 +53,7 @@ def generate_modelcard(model_name):
     if model_name in ["mistralai/Mistral-7B-v0.1", "mistralai/Mistral-7B-Instruct-v0.1",  "HuggingFaceH4/zephyr-7b-beta"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
     elif model_name in ["meta-llama/Meta-Llama-3-8B-Instruct"]:
-        llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype=torch.bfloat16, trust_remote_code=True)
+        llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
     elif model_name in ["tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct", "tiiuae/falcon-40b"]: 
         llm = LLM(model=model_name, tensor_parallel_size=1, dtype="half")
     elif model_name in ["microsoft/phi-2"]:
@@ -64,23 +67,45 @@ def generate_modelcard(model_name):
     temp = 0.1
     topp = 0.9
 
+    if config == "ans_with_evidence":
+        output_dir = "../data/zs_output/ans_with_evidence"
+    elif config == "ans":
+        output_dir = "../data/zs_output/ans"
+
     sheet_to_df_map = pd.read_excel('../data/QAData.xlsx', sheet_name=None)
-    with pd.ExcelWriter('../data/output/{}.xlsx') as writer:
-        all_prompts = []
+    with pd.ExcelWriter(f'{output_dir}/{mname}.xlsx') as writer:
+    # while True:
         for _, mod_key in enumerate(sheet_to_df_map.keys()):
+            all_prompts = []
+            model_dict_list = []
             print(f"Processing model {_}: {mod_key}")
             model_df = sheet_to_df_map[mod_key].loc[9:]
             col_name = sheet_to_df_map[mod_key].columns[1]
-            model_dict_list = []
-            sampling_params = SamplingParams(temperature=temp, top_p=topp, max_tokens=512)
+            ptitle = list(model_df.columns)[1].strip().replace("\n", "")
+            if ptitle == "BART":
+                ptitle = "BART: Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension"
+            sampling_params = SamplingParams(temperature=temp, top_p=topp, max_tokens=1600, stop=['Question:', '\n\n\n\n', '| --- | --- | --- | --- | --- | ', '| | | |'])
+
+            # if mod_key == "22210029_TransformerXL":
+            #     fixed_prompt = 'For the paper "Transformer-XL: Attentive language models beyond a fixed-length context", please answer the following question, with the heading "Answer". Also print the lines from the paper which contain the answer after the heading named "Evidence". Question: What are the gaps in previous literature that this paper tries to address?'
+            #     if sheet_to_df_map[mod_key].loc[10,  "Transformer-XL: Attentive language models beyond a fixed-length context"].strip() == ",":
+            #         sheet_to_df_map[mod_key].loc[10,  "Transformer-XL: Attentive language models beyond a fixed-length context"] = fixed_prompt
 
             for i in model_df.iterrows():
-                prompt_text = i[1][col_name]
-                all_prompts.append(prompt_text)
+                instr = "You are provided with a question about a languge model in the domain of natural language processing. Based on your knowledge of deep learning and natural language processing, answer the question."
+                old_prompt = i[1][col_name]
+                que = old_prompt.split(" Question: ")[1]
+                if config == "ans_with_evidence":
+                    # throw NotImplementedError("Not implemenedte config")
+                    instr = instr + " Also provide evidence of the answer from the paper."
+                    new_prompt = instr + " " + que
+                if config == "ans":
+                    new_prompt = instr + " \n" + f"Paper Title: {ptitle}" + "\nQuestion: " + que + "\n Answer:"
+                all_prompts.append(new_prompt)
             
             outputs = llm.generate(all_prompts, sampling_params)
             for output in outputs:
-                local_dict = {'prompt': prompt_text, f'{mname}_answer': output.outputs[0].text}
+                local_dict = {'prompt': new_prompt, f'{mname}_ans': output.outputs[0].text}
                 model_dict_list.append(local_dict)
                 
             subdf = pd.DataFrame(model_dict_list)
@@ -89,4 +114,4 @@ def generate_modelcard(model_name):
 
 if __name__ == "__main__":
     args = parse_args()
-    generate_modelcard(args.model_name)
+    generate_modelcard(args.model_name, args.config)
