@@ -57,7 +57,6 @@ def model_response_gen(model_name):
         llm = LLM(model=model_name, tensor_parallel_size=1, dtype="half")
     elif model_name in ["microsoft/phi-2"]:
         llm = LLM("microsoft/phi-2", trust_remote_code=True)
-        #llm = PhiForCausalLM(model_name="microsoft/phi-2")
     elif model_name in ["google/gemma-2b-it", "google/gemma-2b"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype=torch.float32)
     else:
@@ -76,11 +75,7 @@ def model_response_gen(model_name):
 
     for _, dockey in enumerate(qa_data):
         ans_gen_prompt = "You are provided with a question about a language model research paper in NLP and DL. You are also provided with the paper above that contains the answer. Answer the question based on the provided text. Do not include any additional text in the output except the answer to the question.\nQuestion: " + qa_data[dockey]["question"] + "\nAnswer:"
-        # print(ans_gen_prompt)
-        # print(qa_data[dockey]["question"])
-        # print(qa_data[dockey]["answer"])
-        # break
-        
+                
         prompt_len = len(model_tokenizer.tokenize(ans_gen_prompt))
         fid = dockey.rsplit("/", 1)[-1]
         full_text = "Paper: " + get_ft(fid)
