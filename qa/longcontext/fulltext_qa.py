@@ -107,7 +107,7 @@ def model_response_gen(model_name):
             model_ans_list[_][f'{clean_model_name}_ans'] = ans
 
         df = pd.DataFrame(model_ans_list)
-        df.to_excel(f'./llm_results/{clean_model_name}.xlsx')
+        df.to_excel(f'./results/{clean_model_name}.xlsx')
 
 
 def parse_args():
