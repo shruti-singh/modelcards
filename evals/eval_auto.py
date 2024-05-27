@@ -1,9 +1,7 @@
 import os
-
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 import time
 from glob import glob
-
 import time
 import evaluate
 import numpy as np
@@ -12,33 +10,74 @@ from autoacu import A3CU
 from evaluate import load
 from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer
+import gc
 
 
-bertscore = None
-bleu = evaluate.load("bleu")
-bleurt = None
-rscorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+def calc_rlscore(gen_ans_array, ans_array):
+    rscorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+    
+    def get_one(gen_ans, ans):
+        ans = str(ans).strip()
+        gen_ans = str(gen_ans).strip()
+        scores = rscorer.score(ans, gen_ans)
+        return scores['rouge1'].precision*100, scores['rouge2'].precision*100, scores['rougeL'].precision*100
+    
+    results = [get_one(gen_ans, ans) for gen_ans, ans in zip(gen_ans_array, ans_array)]
+    
+    # Flush the model
+    del rscorer
+    gc.collect()
+    
+    return [result[0] for result in results], [result[1] for result in results], [result[2] for result in results]
+    
 
-def calc_rlscore(gen_ans, ans):
-    ans = str(ans).strip()
-    gen_ans = str(gen_ans).strip()
-    scores = rscorer.score(ans, gen_ans)
-    return scores['rouge1'].precision*100, scores['rouge2'].precision*100, scores['rougeL'].precision*100
+def calc_bleu(predictions_array, references_array):
+    bleu = evaluate.load("bleu")
+    
+    def get_one(predictions, references):
 
-def calc_bleu(predictions, references):
-    try:
         results = bleu.compute(predictions=predictions, references=references)
-        return results['bleu']*100
-    except:
-        return 0.0
+        return results['bleu']
+        
+    results = [get_one([predictions], [references]) for predictions, references in zip(predictions_array, references_array)]
+    
+    # Flush the model
+    del bleu
+    gc.collect()
+    
+    return results
 
 def calc_bertscore(predictions, references):
-    try:
-        results = bertscore.compute(predictions=predictions, references=references, model_type="microsoft/deberta-xlarge-mnli") #lang="en-sci")
-        return results['precision'][0]*100, results['recall'][0]*100, results['f1'][0]*100
-    except Exception as ex:
-        print("Error during bertscore computation: ", ex)
+    bertscore = load("bertscore")
+    # return [-1 for _ in range(len(predictions))], [-1 for _ in range(len(predictions))], [-1 for _ in range(len(predictions))]
+    results = bertscore.compute(predictions=predictions, references=references, model_type="microsoft/deberta-xlarge-mnli")
+    precision = [score*100 for score in results['precision']]
+    recall = [score*100 for score in results['recall']]
+    f1 = [score*100 for score in results['f1']]
+
+    # try:
+    #     results = bertscore.compute(predictions=predictions, references=references, model_type="microsoft/deberta-xlarge-mnli")
+    #     precision = [score*100 for score in results['precision']]
+    #     recall = [score*100 for score in results['recall']]
+    #     f1 = [score*100 for score in results['f1']]
+    # except Exception as ex:
+    #     import pdb; pdb.set_trace()
+    #     print("Error during bertscore computation: ", ex)
+    #     return None
+    
+    # Flush the model
+    del bertscore
+    gc.collect()
+    
+    return precision, recall, f1
 
 def calc_bleurtscore(predictions, references):
+    bleurt = load("bleurt", module_type="metric")
     results = bleurt.compute(predictions=predictions, references=references)
-    return max(results["scores"])*100
+    scores = [score*100 for score in results["scores"]]
+    
+    # Flush the model
+    del bleurt
+    gc.collect()
+    
+    return scores
