@@ -1,5 +1,5 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import json
 import torch
 from vllm import LLM, SamplingParams
@@ -54,11 +54,15 @@ def model_response_gen(model_name):
         #llm = PhiForCausalLM(model_name="microsoft/phi-2")
     elif model_name in ["google/gemma-2b-it", "google/gemma-2b"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype=torch.float32)
+    elif model_name in ["lmsys/longchat-7b-v1.5-32k"]:
+        llm = LLM(model=model_name, max_model_len=25000, tensor_parallel_size=num_cuda, trust_remote_code=True)
     else:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, trust_remote_code=True)
     
     model_tokenizer = llm.get_tokenizer()
-    model_max_len = model2contextlength[model_name][1]#llm.llm_engine.model_config.max_model_len
+
+    # This is input+output tokens, so we reserve 400 tokens for output generation.
+    model_max_len = model2contextlength[model_name][1] - 400 #llm.llm_engine.model_config.max_model_len
     clean_model_name = model_name_map[model_name]
 
     model_ans_list = []
@@ -92,7 +96,8 @@ def model_response_gen(model_name):
             ldb_gen_prompt = croppped_context + ldb_gen_prompt
 
         prompts_list.append(ldb_gen_prompt)
-        local_dict = {'prompt': ldb_gen_prompt, 'GT': qa_data[dockey]["answer"]}
+        pkey = dockey.rsplit("/", 1)[-1].replace(".json", "")
+        local_dict = {'prompt': ldb_gen_prompt, 'question': qa_data[dockey]["question"], 'GT': qa_data[dockey]["answer"], 'pkey': pkey}
         model_ans_list.append(local_dict)
     
     print("Collated all model card generation prompts, now generating outputs...")
@@ -108,15 +113,16 @@ def model_response_gen(model_name):
             generated_ans.append(output.outputs[0].text)
 
         for _, ans in enumerate(generated_ans):
-            model_ans_list[_][f'{clean_model_name}_ans'] = ans
+            # model_ans_list[_][f'{clean_model_name}_ans'] = ans
+            model_ans_list[_][f'llm_ans'] = ans
 
         df = pd.DataFrame(model_ans_list)
-        df.to_excel(f'./llm_results/may9/{clean_model_name}.xlsx')
+        df.to_excel(f'./llm_results/may27/{clean_model_name}.xlsx')
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', choices=list(model_name_map.keys()), help='name of the model to use for generation, specifically the hf repo name')
+    parser.add_argument('--model_name', help='name of the model to use for generation, specifically the hf repo name')
     args = parser.parse_args()
     return args
 

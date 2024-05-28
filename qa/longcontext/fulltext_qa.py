@@ -59,12 +59,18 @@ def model_response_gen(model_name):
         llm = LLM("microsoft/phi-2", trust_remote_code=True)
     elif model_name in ["google/gemma-2b-it", "google/gemma-2b"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype=torch.float32)
+    elif model_name == "lmsys/longchat-7b-v1.5-32k":
+        llm = LLM(model=model_name, tensor_parallel_size=num_cuda, trust_remote_code=True, max_model_len=25000)#, gpu_memory_utilization=0.8)#model_max_len=25000)
     else:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, trust_remote_code=True)
     
     model_tokenizer = llm.get_tokenizer()
     model_max_len = model2contextlength[model_name][1]#llm.llm_engine.model_config.max_model_len
     clean_model_name = model_name_map[model_name]
+    if model_name == "lmsys/longchat-7b-v1.5-32k":
+        # Set this so that it does not exceed the KV cache storage
+        # ValueError: The model's max seq len (32768) is larger than the maximum number of tokens that can be stored in KV cache (25968). Try increasing `gpu_memory_utilization` or decreasing `max_model_len` when initializing the engine.
+        model_max_len = 25000
 
     model_ans_list = []
     prompts_list = []
@@ -88,11 +94,11 @@ def model_response_gen(model_name):
             ans_gen_prompt = croppped_context + ans_gen_prompt
 
         prompts_list.append(ans_gen_prompt)
-        local_dict = {'question': qa_data[dockey]["question"], 'GT': qa_data[dockey]["answer"]}
+        local_dict = {'question': qa_data[dockey]["question"], 'GT': qa_data[dockey]["answer"], 'pkey': fid}
         model_ans_list.append(local_dict)
     
     print("Collated all model card generation prompts, now generating outputs...")
-    sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=1600, stop=['Question:', '\n\n\n\n', '| --- | --- | --- | --- | --- | ', '| | | |'])
+    sampling_params = SamplingParams(temperature=0.1, top_p=0.95, max_tokens=1000, stop=['Question:', '\n\n\n\n', '| --- | --- | --- | --- | --- | ', '| | | |'])
     # To generate in batches and save answers every 500 steps
     prompt_list_chunks = [prompts_list[x:x+500] for x in range(0, len(prompts_list), 500)]
 

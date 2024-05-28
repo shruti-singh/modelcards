@@ -104,7 +104,7 @@ def generate_modelcard(model_name, config):
                 all_prompts.append(new_prompt)
             
             outputs = llm.generate(all_prompts, sampling_params)
-            for output in outputs:
+            for new_prompt, output in zip(all_prompts, outputs):
                 local_dict = {'prompt': new_prompt, f'{mname}_ans': output.outputs[0].text}
                 model_dict_list.append(local_dict)
                 
