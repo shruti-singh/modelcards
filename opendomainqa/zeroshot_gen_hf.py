@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pandas as pd
 import torch
 import argparse
@@ -49,7 +51,7 @@ def parse_args():
 def generate_modelcard(model_name):
     mname = model_name_map[model_name]
     sheet_to_df_map = pd.read_excel('../data/QAData.xlsx', sheet_name=None)
-    with pd.ExcelWriter('../data/output/{}.xlsx') as writer:
+    with pd.ExcelWriter('../data/zs_output/with_evidence/{}.xlsx') as writer:
         for _, mod_key in enumerate(sheet_to_df_map.keys()):
             print(f"Processing model {_}: {mod_key}")
             model_df = sheet_to_df_map[mod_key].loc[9:]
