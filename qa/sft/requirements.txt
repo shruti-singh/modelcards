@@ -1,0 +1,10 @@
+conda install pytorch-cuda=12.1 pytorch cudatoolkit xformers -c pytorch -c nvidia -c xformers
+pip install "unsloth @git+https://github.com/unslothai/unsloth.git"
+bitsandbytes
+transformers
+peft
+trl
+accelerate
+ipywidgets
+pandas
+datasets

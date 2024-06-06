@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import argparse
 from unsloth import FastLanguageModel
@@ -29,6 +29,8 @@ def infer_results(argmname, argrank):
         save_dir = f"llama3_{argrank}"
     elif mname == "unsloth/mistral-7b-bnb-4bit":
         save_dir = f"mistral_{argrank}"
+    elif mname == "unsloth/gemma-2b-it-bnb-4bit":
+        save_dir = f"gemma_{argrank}"
     else:
         dirname = argmname.replace("/", "_")
         dirname = dirname.replace("-", "_")
@@ -42,18 +44,6 @@ def infer_results(argmname, argrank):
     )
     FastLanguageModel.for_inference(model)
 
-
-    alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-    ### Instruction:
-    {}
-
-    ### Input:
-    {}
-
-    ### Response:
-    {}"""
-
     dataset = load_dataset('json', data_files="../../data/modelcard_ft_data/test.jsonl")
 
     llm_ans_list = []
@@ -62,7 +52,7 @@ def infer_results(argmname, argrank):
         context_str = context_str.replace("\n", " ")
         inputs = tokenizer(
         [
-        f"You are provided with an excerpt from a research paper about a language model in the domain of NLP and DL. You are provided with a question about the language model. Answer the question based on the provided text and your knowledge of NLP.\n\nPaper Title - {data['title']} Paper Excerpt: {context_str}\n\nQuestion: {data['question']}\n\n### Response:" #+ EOS_TOKEN padding_side='left',
+        f"You are provided with an excerpt from a research paper about a language model in the domain of NLP and DL. You are provided with a question about the language model. Answer the question based on the provided text and your knowledge of NLP.\n\nPaper Title - {data['title']} Paper Excerpt: {context_str}\n\nQuestion: {data['question']}\n\n### Response:" 
         ],  return_tensors = "pt").to("cuda")
         outputs = model.generate(**inputs, max_new_tokens = 200, use_cache = True, pad_token_id=tokenizer.eos_token_id)
         gen_answer = tokenizer.batch_decode(outputs)

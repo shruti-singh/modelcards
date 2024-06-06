@@ -5,7 +5,7 @@ import numpy as np
 import time
 import sys
 
-RESULTS_SAVE_PATH = "/home/xhitij.cm/modelcards/evaluation_results"
+RESULTS_SAVE_PATH = "/home/singh_shruti/workspace/rep_learning/eval_llms/modelcards/data/xhitijanalysis/evaluation_results"
 if not os.path.exists(RESULTS_SAVE_PATH):
     os.mkdir(RESULTS_SAVE_PATH)
 
@@ -27,7 +27,6 @@ class RunEvals:
     @staticmethod
     def sft_eval(sft_path):
         model_names = os.listdir(sft_path)
-        # model_names = ['mistral_16.xlsx']
         total_models = len(model_names)
         start_time = time.time()
         for idx, model_name in enumerate(model_names, start=1):
@@ -84,7 +83,7 @@ class RunEvals:
             df.to_excel(os.path.join(sft_save_path, model_name), index=False)
             
             print(f"\nModel: {model_name} Evaluation Done!")
-        print("\nSFT: All Models Evaluation Done!")
+        print("\RAG: All Models Evaluation Done!")
         
     @staticmethod
     def zeroshot_eval(zeroshot_path):
@@ -118,7 +117,7 @@ class RunEvals:
             df.to_excel(os.path.join(sft_save_path, model_name), index=False)
             
             print(f"\nModel: {model_name} Evaluation Done!")
-        print("\nSFT: All Models Evaluation Done!")
+        print("ZS: All Models Evaluation Done!")
         
     @staticmethod
     def longcontext_eval(longcontext_path):
@@ -151,18 +150,12 @@ class RunEvals:
             df.to_excel(os.path.join(sft_save_path, model_name), index=False)
             
             print(f"\nModel: {model_name} Evaluation Done!")
-        print("\nSFT: All Models Evaluation Done!")
+        print("\nLongcontext Llama3: All Models Evaluation Done!")
         
 
 if __name__ == "__main__":
-    sft_results_path = "/home/xhitij.cm/modelcards/qa/sft/results"
-    rag_results_path = "/home/xhitij.cm/modelcards/qa/rag/retriever/modelcard/results"
-    longcontext_path = "/home/xhitij.cm/modelcards/qa/longcontext/results"
-    zeroshot_path = "/home/xhitij.cm/modelcards/opendomainqa/results"
-
-    # RunEvals.sft_eval(sft_results_path) DONE
-    # RunEvals.rag_eval(rag_results_path)
-    # RunEvals.zeroshot_eval(zeroshot_path)
-    # RunEvals.longcontext_eval(longcontext_path) DONE
+    """Set paths to each of the configuration results: SFT, ZS, RAG. Call the appropriate function and provide the path."""
+    sft_results_path = "TODO: Set path to results folder. Path should look like ../qa/sft/results"
+    RunEvals.sft_eval(sft_results_path)
     
     print("Evaluation Done!")

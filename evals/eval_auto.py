@@ -1,5 +1,3 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
 import time
 from glob import glob
 import time
@@ -35,9 +33,14 @@ def calc_bleu(predictions_array, references_array):
     bleu = evaluate.load("bleu")
     
     def get_one(predictions, references):
-
-        results = bleu.compute(predictions=predictions, references=references)
-        return results['bleu']
+        try:
+            results = bleu.compute(predictions=predictions, references=references)
+            return results['bleu']
+        except Exception as ex:
+            print("Error encountered in bleu computation: ", ex)
+            print("Preds: ", predictions)
+            print("Refs: ", references)
+            return 0
         
     results = [get_one([predictions], [references]) for predictions, references in zip(predictions_array, references_array)]
     
