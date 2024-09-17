@@ -8,3 +8,12 @@ The `qa` directory contains the code to reproduce zeroshot, retrieval-augmented 
 The `evals` directory contains the code to compute metrics.  
 
 The `data` directory contains the modelcard dataset. The train and test splits are in directory `data/modelcards`. 
+
+### Setting up the repository
+`conda create -n modelcards python=3.10.14`  
+`conda activate modelcards`  
+`pip install -r requirements.txt`  
+
+Gated models such as Llama require setting the appropriate huggingface token:  
+huggingface-cli login HFTOKEN  
+

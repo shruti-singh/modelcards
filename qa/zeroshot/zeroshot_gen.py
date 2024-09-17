@@ -1,11 +1,9 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from vllm import LLM, SamplingParams
 import pandas as pd
 import torch
 import argparse
 
-model_name_map = {"meta-llama/Llama-2-7b-chat-hf": "llama2_7b_chat", "meta-llama/Llama-2-13b-chat-hf": "llama2_13b_chat", "mistralai/Mistral-7B-v0.1": "mistral_7b", "mistralai/Mistral-7B-Instruct-v0.1": "mistral_7b_instruct", "HuggingFaceH4/zephyr-7b-beta": "zephyr_7b_beta", "tiiuae/falcon-7b": "falcon_7b", "tiiuae/falcon-7b-instruct": "falcon_7b_instruct", "facebook/galactica-6.7b": "galactica_7b", "google/gemma-2b-it": "gemma_2b_it", "google/gemma-2b": "gemma_2b", "meta-llama/Meta-Llama-3-8B-Instruct": "llama3_8b_it"}
+model_name_map = {"meta-llama/Llama-2-7b-chat-hf": "llama2_7b_chat", "meta-llama/Llama-2-13b-chat-hf": "llama2_13b_chat", "mistralai/Mistral-7B-v0.1": "mistral_7b", "mistralai/Mistral-7B-Instruct-v0.1": "mistral_7b_instruct", "HuggingFaceH4/zephyr-7b-beta": "zephyr_7b_beta", "tiiuae/falcon-7b": "falcon_7b", "tiiuae/falcon-7b-instruct": "falcon_7b_instruct", "facebook/galactica-6.7b": "galactica_7b", "google/gemma-2b-it": "gemma_2b_it", "google/gemma-2b": "gemma_2b", "meta-llama/Meta-Llama-3-8B-Instruct": "llama3_8b_it", "meta-llama/Meta-Llama-3.1-8B-Instruct": "llama3_81b_it", "meta-llama/Meta-Llama-3.1-70B-Instruct": "llama3_70b_it"}
 
 model2contextlength = {
     "meta-llama/Llama-2-7b-hf": ("llama2_7b", 4096, "https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/generation_config.json"),
@@ -17,7 +15,9 @@ model2contextlength = {
     "facebook/galactica-6.7b": ("galactica_7b", 2048, "https://llm.extractum.io/model/facebook%2Fgalactica-6.7b,11ptgQY4r8q8sc7KY9iN38"),
     "google/gemma-2b-it": ("gemma_2b_it", 8192, ""), 
     "google/gemma-2b": ("gemma_2b", 8192, ""), 
-    "meta-llama/Meta-Llama-3-8B-Instruct": ("llama3_8b_it", 4096, "")
+    "meta-llama/Meta-Llama-3-8B-Instruct": ("llama3_8b_it", 4096, ""),
+    "meta-llama/Meta-Llama-3.1-8B-Instruct": ("llama3_81b_it", 8192, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B"),
+    "meta-llama/Meta-Llama-3.1-70B-Instruct": ("llama3_70b_it", 8192, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B")
 }
 
 
@@ -29,13 +29,13 @@ def parse_args():
     return args
 
 def generate_modelcard(model_name, config):
-    num_cuda = 1 # torch.cuda.device_count()
+    num_cuda = torch.cuda.device_count()
     mname = model_name_map[model_name]
     
     # For models like mistral, falcon, cc>=8.0 required, so we load in 
     if model_name in ["mistralai/Mistral-7B-v0.1", "mistralai/Mistral-7B-Instruct-v0.1",  "HuggingFaceH4/zephyr-7b-beta"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
-    elif model_name in ["meta-llama/Meta-Llama-3-8B-Instruct"]:
+    elif model_name in ["meta-llama/Meta-Llama-3-8B-Instruct", "meta-llama/Meta-Llama-3.1-8B", "meta-llama/Meta-Llama-3.1-70B-Instruct"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
     elif model_name in ["tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct"]: 
         llm = LLM(model=model_name, tensor_parallel_size=1, dtype="half")
@@ -48,11 +48,11 @@ def generate_modelcard(model_name, config):
     topp = 0.9
 
     if config == "ans_with_evidence":
-        output_dir = "../../data/zs_output/ans_with_evidence"
+        output_dir = "./outputs/ans_with_evidence"
     elif config == "ans":
-        output_dir = "../../data/zs_output/ans"
+        output_dir = "./outputs/ans"
 
-    sheet_to_df_map = pd.read_excel('../../data/QAData.xlsx', sheet_name=None)
+    sheet_to_df_map = pd.read_excel('../../data/ModelCardQADataset.xlsx', sheet_name=None)
     with pd.ExcelWriter(f'{output_dir}/{mname}.xlsx') as writer:
         for _, mod_key in enumerate(sheet_to_df_map.keys()):
             all_prompts = []
