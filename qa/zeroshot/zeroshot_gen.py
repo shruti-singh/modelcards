@@ -16,8 +16,8 @@ model2contextlength = {
     "google/gemma-2b-it": ("gemma_2b_it", 8192, ""), 
     "google/gemma-2b": ("gemma_2b", 8192, ""), 
     "meta-llama/Meta-Llama-3-8B-Instruct": ("llama3_8b_it", 4096, ""),
-    "meta-llama/Meta-Llama-3.1-8B-Instruct": ("llama3_81b_it", 8192, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B"),
-    "meta-llama/Meta-Llama-3.1-70B-Instruct": ("llama3_70b_it", 8192, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B")
+    "meta-llama/Meta-Llama-3.1-8B-Instruct": ("llama3_81b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B"),
+    "meta-llama/Meta-Llama-3.1-70B-Instruct": ("llama3_70b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B")
 }
 
 
@@ -52,7 +52,7 @@ def generate_modelcard(model_name, config):
     elif config == "ans":
         output_dir = "./outputs/ans"
 
-    sheet_to_df_map = pd.read_excel('../../data/ModelCardQADataset.xlsx', sheet_name=None)
+    sheet_to_df_map = pd.read_excel('../../data/QAData.xlsx', sheet_name=None)
     with pd.ExcelWriter(f'{output_dir}/{mname}.xlsx') as writer:
         for _, mod_key in enumerate(sheet_to_df_map.keys()):
             all_prompts = []
