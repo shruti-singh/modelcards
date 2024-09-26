@@ -4,7 +4,3 @@ bitsandbytes
 transformers
 peft
 trl
-accelerate
-ipywidgets
-pandas
-datasets

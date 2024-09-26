@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import argparse
 
-model_name_map = {"meta-llama/Llama-2-7b-chat-hf": "llama2_7b_chat", "meta-llama/Llama-2-13b-chat-hf": "llama2_13b_chat", "mistralai/Mistral-7B-v0.1": "mistral_7b", "mistralai/Mistral-7B-Instruct-v0.1": "mistral_7b_instruct", "HuggingFaceH4/zephyr-7b-beta": "zephyr_7b_beta", "tiiuae/falcon-7b": "falcon_7b", "tiiuae/falcon-7b-instruct": "falcon_7b_instruct", "facebook/galactica-6.7b": "galactica_7b", "google/gemma-2b-it": "gemma_2b_it", "google/gemma-2b": "gemma_2b", "meta-llama/Meta-Llama-3-8B-Instruct": "llama3_8b_it", "meta-llama/Meta-Llama-3.1-8B-Instruct": "llama3_81b_it", "meta-llama/Meta-Llama-3.1-70B-Instruct": "llama3_70b_it"}
+model_name_map = {"meta-llama/Llama-2-7b-chat-hf": "llama2_7b_chat", "meta-llama/Llama-2-13b-chat-hf": "llama2_13b_chat", "mistralai/Mistral-7B-v0.1": "mistral_7b", "mistralai/Mistral-7B-Instruct-v0.1": "mistral_7b_instruct", "HuggingFaceH4/zephyr-7b-beta": "zephyr_7b_beta", "tiiuae/falcon-7b": "falcon_7b", "tiiuae/falcon-7b-instruct": "falcon_7b_instruct", "tiiuae/falcon-40b-instruct": "falcon_40b_instruct", "facebook/galactica-6.7b": "galactica_7b", "facebook/galactica-30b": "galactica_30b", "google/gemma-2b-it": "gemma_2b_it", "google/gemma-2b": "gemma_2b", "meta-llama/Meta-Llama-3-8B-Instruct": "llama3_8b_it", "meta-llama/Meta-Llama-3.1-8B-Instruct": "llama31_81b_it", "meta-llama/Meta-Llama-3.1-70B-Instruct": "llama31_70b_it"}
 
 model2contextlength = {
     "meta-llama/Llama-2-7b-hf": ("llama2_7b", 4096, "https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/generation_config.json"),
@@ -12,12 +12,14 @@ model2contextlength = {
     "HuggingFaceH4/zephyr-7b-beta": ("zephyr_7b_beta", 16384, "https://docs.endpoints.anyscale.com/supported-models/huggingfaceh4-zephyr-7b-beta/"),
     "tiiuae/falcon-7b": ("falcon_7b", 2048, "https://huggingface.co/tiiuae/falcon-7b/blob/main/tokenizer_config.json"),
     "tiiuae/falcon-7b-instruct": ("falcon_7b_instruct", 2048, "https://huggingface.co/tiiuae/falcon-7b-instruct/blob/main/tokenizer_config.json"), 
+    "tiiuae/falcon-40b-instruct": ("falcon_40b_instruct", 2048, "https://huggingface.co/tiiuae/falcon-40b-instruct/blob/main/tokenizer_config.json"),
     "facebook/galactica-6.7b": ("galactica_7b", 2048, "https://llm.extractum.io/model/facebook%2Fgalactica-6.7b,11ptgQY4r8q8sc7KY9iN38"),
+    "facebook/galactica-30b": ("galactica_30b", 2048, "https://llm.extractum.io/model/facebook%2Fgalactica-6.7b,11ptgQY4r8q8sc7KY9iN38"),
     "google/gemma-2b-it": ("gemma_2b_it", 8192, ""), 
     "google/gemma-2b": ("gemma_2b", 8192, ""), 
     "meta-llama/Meta-Llama-3-8B-Instruct": ("llama3_8b_it", 4096, ""),
-    "meta-llama/Meta-Llama-3.1-8B-Instruct": ("llama3_81b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B"),
-    "meta-llama/Meta-Llama-3.1-70B-Instruct": ("llama3_70b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B")
+    "meta-llama/Meta-Llama-3.1-8B-Instruct": ("llama31_81b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B"),
+    "meta-llama/Meta-Llama-3.1-70B-Instruct": ("llama31_70b_it", 4096, "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B")
 }
 
 
@@ -35,15 +37,16 @@ def generate_modelcard(model_name, config):
     # For models like mistral, falcon, cc>=8.0 required, so we load in 
     if model_name in ["mistralai/Mistral-7B-v0.1", "mistralai/Mistral-7B-Instruct-v0.1",  "HuggingFaceH4/zephyr-7b-beta"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
-    elif model_name in ["meta-llama/Meta-Llama-3-8B-Instruct", "meta-llama/Meta-Llama-3.1-8B", "meta-llama/Meta-Llama-3.1-70B-Instruct"]:
-        llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
-    elif model_name in ["tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct"]: 
-        llm = LLM(model=model_name, tensor_parallel_size=1, dtype="half")
+    # elif model_name in ["meta-llama/Meta-Llama-3-8B-Instruct", "meta-llama/Meta-Llama-3.1-8B", "meta-llama/Meta-Llama-3.1-70B-Instruct"]:
+    #     llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype="half", trust_remote_code=True)
+    # elif model_name in ["tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct"]: 
+    #     llm = LLM(model=model_name, tensor_parallel_size=1, dtype="half")
     elif model_name in ["google/gemma-2b-it", "google/gemma-2b"]:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, dtype=torch.float32)
     else:
         llm = LLM(model=model_name, tensor_parallel_size=num_cuda, trust_remote_code=True)
 
+    tokenizer = llm.get_tokenizer()
     temp = 0.1
     topp = 0.9
 
@@ -64,7 +67,7 @@ def generate_modelcard(model_name, config):
             if ptitle == "BART":
                 ptitle = "BART: Denoising Sequence-to-Sequence Pre-training for Natural Language Generation, Translation, and Comprehension"
             
-            sampling_params = SamplingParams(temperature=temp, top_p=topp, max_tokens=1600, stop=['Question:', '\n\n\n\n', '| --- | --- | --- | --- | --- | ', '| | | |'])
+            sampling_params = SamplingParams(temperature=temp, top_p=topp, max_tokens=1600, stop_token_ids=[tokenizer.eos_token_id, tokenizer.convert_tokens_to_ids("<|eot_id|>")], stop=['Question:', '\n\n\n\n', '| --- | --- | --- | --- | --- | ', '| | | |'])
 
             for i in model_df.iterrows():
                 instr = "You are provided with a question about a languge model in the domain of natural language processing. Based on your knowledge of deep learning and natural language processing, answer the question."
@@ -76,7 +79,9 @@ def generate_modelcard(model_name, config):
                     new_prompt = instr + " " + que
                 if config == "ans":
                     new_prompt = instr + " \n" + f"Paper Title: {ptitle}" + "\nQuestion: " + que + "\n Answer:"
-                all_prompts.append(new_prompt)
+                
+                conversations = tokenizer.apply_chat_template([{'role': 'user', 'content': new_prompt}], tokenize=False)
+                all_prompts.append(conversations)
             
             outputs = llm.generate(all_prompts, sampling_params)
             for new_prompt, output in zip(all_prompts, outputs):

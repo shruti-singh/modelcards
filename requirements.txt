@@ -2,3 +2,9 @@ torch
 pandas
 openpyxl
 evaluate
+rouge-score
+accelerate
+ipywidgets
+pandas
+datasets
+evaluate

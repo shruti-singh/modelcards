@@ -1,12 +1,6 @@
-import time
-from glob import glob
-import time
+
 import evaluate
-import numpy as np
-import pandas as pd
-from autoacu import A3CU
 from evaluate import load
-from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer
 import gc
 
@@ -75,12 +69,13 @@ def calc_bertscore(predictions, references):
     return precision, recall, f1
 
 def calc_bleurtscore(predictions, references):
-    bleurt = load("bleurt", module_type="metric")
-    results = bleurt.compute(predictions=predictions, references=references)
-    scores = [score*100 for score in results["scores"]]
+    return 0
+    # bleurt = load("bleurt", module_type="metric")
+    # results = bleurt.compute(predictions=predictions, references=references)
+    # scores = [score*100 for score in results["scores"]]
     
-    # Flush the model
-    del bleurt
-    gc.collect()
+    # # Flush the model
+    # del bleurt
+    # gc.collect()
     
-    return scores
+    # return scores

@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 import argparse
 import torch
@@ -24,6 +24,8 @@ def finetune_modelcard(argmname, argrank):
         "unsloth/gemma-2b-bnb-4bit",
         "unsloth/gemma-2b-it-bnb-4bit",
         "unsloth/llama-3-8b-bnb-4bit",
+        "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        "unsloth/Meta-Llama-3.1-70B-Instruct-bnb-4bit",
     ]
 
     mname = argmname # "unsloth/mistral-7b-instruct-v0.2-bnb-4bit" # "unsloth/llama-3-8b-bnb-4bit"
@@ -31,6 +33,10 @@ def finetune_modelcard(argmname, argrank):
         save_dir = f"mistral_it_{argrank}" # "llama3"
     elif mname == "unsloth/llama-3-8b-bnb-4bit":
         save_dir = f"llama3_{argrank}"
+    elif mname == "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit":
+        save_dir = f"llama31_8b_{argrank}"
+    elif mname == "unsloth/Meta-Llama-3.1-70B-Instruct-bnb-4bit":
+        save_dir = f"llama31_70b_{argrank}"
     elif mname == "unsloth/mistral-7b-bnb-4bit":
         save_dir = f"mistral_{argrank}"
     elif mname == "unsloth/gemma-2b-it-bnb-4bit":

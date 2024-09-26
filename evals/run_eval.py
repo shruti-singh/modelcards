@@ -5,7 +5,7 @@ import numpy as np
 import time
 import sys
 
-RESULTS_SAVE_PATH = "/home/singh_shruti/workspace/rep_learning/eval_llms/modelcards/data/xhitijanalysis/evaluation_results"
+RESULTS_SAVE_PATH = "./evaluation_results"
 if not os.path.exists(RESULTS_SAVE_PATH):
     os.mkdir(RESULTS_SAVE_PATH)
 
@@ -88,7 +88,7 @@ class RunEvals:
     @staticmethod
     def zeroshot_eval(zeroshot_path):
         model_names = os.listdir(zeroshot_path)
-        done_models = os.listdir('/home/xhitij.cm/modelcards/evaluation_results/zeroshot')
+        done_models = os.listdir('./evaluation_results/zeroshot')
         total_models = len(model_names)
         for idx, model_name in enumerate(model_names, start=1):
             if model_name.endswith(".xlsx") == False:
@@ -155,7 +155,7 @@ class RunEvals:
 
 if __name__ == "__main__":
     """Set paths to each of the configuration results: SFT, ZS, RAG. Call the appropriate function and provide the path."""
-    sft_results_path = "TODO: Set path to results folder. Path should look like ../qa/sft/results"
+    sft_results_path = "../qa/sft/results" # "TODO: Set path to results folder. Path should look like ../qa/sft/results"
     RunEvals.sft_eval(sft_results_path)
     
     print("Evaluation Done!")
