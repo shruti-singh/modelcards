@@ -36,6 +36,14 @@ class RunEvals:
             df = pd.read_excel(model_excel_path)
             gt_answers = df["answer"].to_list()
             llm_answers = df["llm_ans"].to_list()
+            
+            sft_save_path = os.path.join(RESULTS_SAVE_PATH, "sft")
+            if not os.path.exists(sft_save_path):
+                os.mkdir(sft_save_path)
+            if os.path.exists(os.path.join(sft_save_path, model_name)):
+                print("Eval results already exist for this model. Skipping...")
+                continue
+
             r1_precision, r2_precision, rl_precision, bleu_scores, bert_score_precision, bert_score_recall, bert_score_f1, bleurt_score = RunEvals.get_all_scores(llm_answers, gt_answers)
 
             df["r1_precision"] = r1_precision
@@ -46,11 +54,9 @@ class RunEvals:
             df["bert_score_recall"] = bert_score_recall
             df["bert_score_f1"] = bert_score_f1
             df["bleurt_score"] = bleurt_score
-            sft_save_path = os.path.join(RESULTS_SAVE_PATH, "sft")
-            if not os.path.exists(sft_save_path):
-                os.mkdir(sft_save_path)
+
             df.to_excel(os.path.join(sft_save_path, model_name), index=False)
-            
+
             print(f"\nModel: {model_name} Evaluation Done!")
         print("\nSFT: All Models Evaluation Done!")
         
@@ -157,5 +163,10 @@ if __name__ == "__main__":
     """Set paths to each of the configuration results: SFT, ZS, RAG. Call the appropriate function and provide the path."""
     sft_results_path = "../qa/sft/results" # "TODO: Set path to results folder. Path should look like ../qa/sft/results"
     RunEvals.sft_eval(sft_results_path)
+    # "../qa/zeroshot/outputs/ans/llama31*"
+    zs_results_path = "../qa/zeroshot/outputs/ans" # "TODO: Set path to results folder. Path should look like ../qa/sft/results"
+    RunEvals.zeroshot_eval(zs_results_path)
+    rag_results_path = "../qa/rag/retriever/modelcard/outputs" # "TODO: Set path to results folder. Path should look like ../qa/sft/results"
+    RunEvals.rag_eval(rag_results_path)
     
     print("Evaluation Done!")
